@@ -1,0 +1,254 @@
+﻿<center>
+    @if (oBultos != null && oBultos.Count != 0)
+    {
+        <table class="table col-sm-6 ">
+            <tr>
+                <th>Número de guía</th>
+                <th>Cantidad de bultos cargados</th>
+                <th>Cantidad de bultos</th>
+                <th></th>
+                <th></th>
+            </tr>
+
+
+            @foreach (var a in oBultos)
+            {
+                @if (a.List != null)
+                {
+                    <tr>
+                        <td>@a.Id</td>
+                        <td>@(a.cantidadBultos - a.List.Count)</td>
+                        <td>@a.cantidadBultos</td>
+                        <td>
+                            <button class="btn btn-danger" @onclick="()=>removeGuia(a.Id)"><FeatherTrash2 CssClass="foo bar" Color="Red"></FeatherTrash2></button>
+                        </td>
+                        <td>
+                            <button class="btn btn-success" @onclick="()=>recicleGuia(a.Id)"><FeatherRefreshCcw Color="Green"></FeatherRefreshCcw></button>
+                        </td>
+                    </tr>
+                }
+
+            }
+        </table>
+
+
+    }
+    else
+    {
+        <a>Escanee una guía</a>
+    }
+    <div class="form-group" style="height: 30px; width: 200px;margin-left: auto;
+    margin-right: auto;">
+        <input @ref="textinput"
+               @bind-value="@this.id"
+               @onkeyup="send"
+               class="form-control"autofocus />
+    </div>
+    <br />
+    <br />
+
+
+
+    @if (oBultos != null)
+    {
+        @foreach (var Bulto in oBultos)
+        {
+            @if (Bulto.List != null)
+            {
+                @foreach (var a in Bulto.List)
+                {
+                    <li>@a</li>
+
+                }
+            }
+        }
+
+    }
+
+    @if (oBultos.Where(x=>x.List.Count ==0).ToList().Count != oBultos.Count && oBultos.Count!=0 )
+    {
+        <div class="form-group" style="height: 30px; width: 200px;margin-left: auto;
+    margin-right: auto;">
+            <input @ref="textinput"
+               @bind-value="@this.Bulto"
+               @onkeyup="removebulto"
+               class="form-control form-control-user inputfocus" autofocus />
+        </div>
+
+    }
+    <br />
+    <br />
+    @if (press1)
+    {
+
+        <button class="btn btn-outline-success">Enviar guía</button>
+    }
+</center>
+
+@code {
+    [CascadingParameter] public IModalService Modal { get; set; }
+    bool press;
+    bool press1;
+    public string id;
+    Respuesta<Guium> oGuia = new();
+    List<Bultos> oBultos = new();
+    string Bulto;
+    protected ElementReference textinput;
+
+
+    async void send(KeyboardEventArgs args)
+    {
+
+        if ((args.Code == "Enter") || (args.Code == "NumpadEnter"))
+        {
+
+            oGuia = await http.GetFromJsonAsync<Respuesta<Guium>>($"/api/guia/{id}");
+
+            Bultos oBulto = new();
+
+            if (oGuia.List != null)
+            {
+
+                for (int i = 1; i <= oGuia.List.Bulto; i++)
+                {
+                    oBulto.Id = id;
+                    oBulto.cantidadBultos = (int)oGuia.List.Bulto;
+                    if (i < 10)
+                    {
+
+                        if (!oBulto.List.Contains($"{oGuia.List.Guia}S00{i}"))
+                        {
+                            oBulto.List.Add($"{oGuia.List.Guia}S00{i}");
+                        }
+
+                    }
+                    if (i >= 10)
+                    {
+
+                        if (!oBulto.List.Contains($"{oGuia.List.Guia}S0{i}"))
+                        {
+                            oBulto.List.Add($"{oGuia.List.Guia}S0{i}");
+                        }
+
+                    }
+                    if (i >= 100)
+                    {
+
+                        if (!oBulto.List.Contains($"{oGuia.List.Guia}S{i}"))
+                        {
+                            oBulto.List.Add($"{oGuia.List.Guia}S{i}");
+                        }
+
+                    }
+
+                }
+
+
+                if (oBultos.Where(x => x.Id == oBulto.Id).ToList().Count == 0) oBultos.Add(oBulto);
+
+            }
+            StateHasChanged();
+        }
+
+    }
+
+    public async Task removebulto(KeyboardEventArgs args)
+    {
+
+        if ((args.Code == "Enter") || (args.Code == "NumpadEnter"))
+        {
+
+            foreach (var Bultos in oBultos)
+            {
+                if (!Bultos.List.Contains(Bulto) && Bultos.List.Count != 0)
+                {
+                    var options = new ModalOptions()
+                        {
+                            HideHeader = true,
+                            HideCloseButton = true
+
+                        };
+                    var modal = Modal.Show<ModalError>("", options);
+                }
+                else
+                {
+                    Bultos.List.Remove(Bulto);
+                    if (Bultos.List.Count == 0 && !Bultos.finish)
+                    {
+                        Bultos.finish = true;
+                        var options = new ModalOptions()
+                            {
+                                Animation = ModalAnimation.FadeInOut(0.4),
+                                HideHeader = true,
+                                HideCloseButton = true,
+
+                            };
+                        var modal = Modal.Show<ModalOk>("", options);
+
+                    }
+
+                }
+
+
+            }
+        }
+
+    }
+    async Task removeGuia(string id)
+    {
+
+        oBultos.Remove(oBultos.Where(x => x.Id == id).First());
+    }
+
+    async Task recicleGuia(string id)
+    {
+
+        oBultos.Remove(oBultos.Where(x => x.Id == id).First());
+        oGuia = await http.GetFromJsonAsync<Respuesta<Guium>>($"/api/guia/{id}");
+
+        Bultos oBulto = new();
+
+        if (oGuia.List != null)
+        {
+
+            for (int i = 1; i <= oGuia.List.Bulto; i++)
+            {
+                oBulto.Id = id;
+                oBulto.cantidadBultos = (int)oGuia.List.Bulto;
+                if (i < 10)
+                {
+
+                    if (!oBulto.List.Contains($"{oGuia.List.Guia}S00{i}"))
+                    {
+                        oBulto.List.Add($"{oGuia.List.Guia}S00{i}");
+                    }
+
+                }
+                if (i >= 10)
+                {
+
+                    if (!oBulto.List.Contains($"{oGuia.List.Guia}S0{i}"))
+                    {
+                        oBulto.List.Add($"{oGuia.List.Guia}S0{i}");
+                    }
+
+                }
+                if (i >= 100)
+                {
+
+                    if (!oBulto.List.Contains($"{oGuia.List.Guia}S{i}"))
+                    {
+                        oBulto.List.Add($"{oGuia.List.Guia}S{i}");
+                    }
+
+                }
+
+            }
+
+
+            if (oBultos.Where(x => x.Id == oBulto.Id).ToList().Count == 0) oBultos.Add(oBulto);
+
+        }
+        StateHasChanged();
+    }
+}

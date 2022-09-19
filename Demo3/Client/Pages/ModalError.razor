@@ -1,0 +1,17 @@
+﻿<center>
+
+    <img width="100" src="/images/alert.png" />
+    <br />
+    <a>bulto inexistente o ya escaneado</a>
+</center>
+
+@code{
+    [CascadingParameter] BlazoredModalInstance ModalInstance { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(1000);
+        ModalInstance.CloseAsync(ModalResult.Ok($"Form was submitted successfully."));
+
+    }
+}

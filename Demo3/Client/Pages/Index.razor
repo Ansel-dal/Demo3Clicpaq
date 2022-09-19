@@ -1,0 +1,57 @@
+﻿@page "/"
+
+ <style>
+
+        
+        .sidebar {
+            display: none;
+        }
+
+    </style>
+
+@if (!press)
+{
+    <style>
+
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+
+        div {
+            background-color: lightslategrey;
+            height: 100%;
+            width: 100%;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        .sidebar {
+            display: none;
+        }
+    </style>
+    <div @onclick="()=>press=true">
+        <br>
+        <br>
+        <br>
+        <center>
+            <img width="300" src="images/logo1.png" />
+            <br />
+            <br />
+
+            <a><strong>presione para escanear una guía</strong></a>
+        </center>
+    </div>
+}
+@if (press)
+{
+    <CargarGuia/>
+
+}
+@code {
+    bool press;
+    
+}
